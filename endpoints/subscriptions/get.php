@@ -184,6 +184,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
   $payersBySubscription = getPayersBySubscription($db, $subscriptions);
   $categoriesBySubscription = getCategoriesBySubscription($db, $subscriptions);
   $paidStatusFilter = isset($_GET['paidStatus']) && in_array($_GET['paidStatus'], ['paid', 'unpaid']) ? $_GET['paidStatus'] : '';
+  $filteredSubscriptions = [];
 
   foreach ($subscriptions as $subscription) {
     if ($subscription['inactive'] == 1 && isset($settings['hideDisabledSubscriptions']) && $settings['hideDisabledSubscriptions'] === 'true') {
@@ -198,6 +199,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     if ($paidStatusFilter === 'unpaid' && $paidThisCycle) {
       continue;
     }
+    $filteredSubscriptions[] = $subscription;
     $id = $subscription['id'];
     $print[$id]['id'] = $id;
     $print[$id]['logo'] = $subscription['logo'] != "" ? "images/uploads/logos/" . $subscription['logo'] : "";
@@ -225,6 +227,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
     $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
     $print[$id]['price'] = floatval($subscription['price']);
+    $print[$id]['monthly_cost'] = getSubscriptionMonthlyCostInMainCurrency($subscription, $db, $mainCurrencyId);
     $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
     $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
     $print[$id]['inactive'] = $subscription['inactive'];
@@ -308,6 +311,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
       $lang
     ),
     'folders' => buildFolderStats($db, $userId, $folders ?? [], $mainCurrencyId, $currencies, $i18n),
+    'summary' => calculateSubscriptionsSummary($filteredSubscriptions, $db, $mainCurrencyId, $currencies, $settings),
     'labels' => $labels,
     'icons' => $icons,
     'messages' => [

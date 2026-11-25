@@ -303,6 +303,47 @@ function calculateFolderStats($db, $userId, $folders, $mainCurrencyId)
     return $stats;
 }
 
+function calculateSubscriptionsSummary($subscriptions, $db, $mainCurrencyId, $currencies, $settings = [])
+{
+    $monthlyTotal = 0.0;
+    $count = 0;
+    $hideDisabled = isset($settings['hideDisabledSubscriptions']) && $settings['hideDisabledSubscriptions'] === 'true';
+
+    foreach ($subscriptions as $subscription) {
+        if (!empty($subscription['inactive']) && $hideDisabled) {
+            continue;
+        }
+        $count++;
+        if (empty($subscription['inactive'])) {
+            $monthlyTotal += getSubscriptionMonthlyCostInMainCurrency($subscription, $db, $mainCurrencyId);
+        }
+    }
+
+    $yearlyTotal = $monthlyTotal * 12;
+    $mainCurrencyCode = $currencies[$mainCurrencyId]['code'] ?? 'USD';
+
+    return [
+        'count' => $count,
+        'monthly_total' => $monthlyTotal,
+        'yearly_total' => $yearlyTotal,
+        'currency_code' => $mainCurrencyCode,
+        'monthly_formatted' => htmlToText(formatPrice($monthlyTotal, $mainCurrencyCode, $currencies)),
+        'yearly_formatted' => htmlToText(formatPrice($yearlyTotal, $mainCurrencyCode, $currencies)),
+    ];
+}
+
+function getSubscriptionMonthlyCostInMainCurrency($subscription, $db, $mainCurrencyId)
+{
+    if (!empty($subscription['inactive'])) {
+        return 0.0;
+    }
+    $price = floatval($subscription['price']);
+    if ($subscription['currency_id'] != $mainCurrencyId) {
+        $price = getPriceConverted($price, $subscription['currency_id'], $db);
+    }
+    return floatval(getPricePerMonth($subscription['cycle'], $subscription['frequency'], $price));
+}
+
 /**
  * Display strings for the folder cards, for the AJAX refresh.
  */
@@ -350,6 +391,7 @@ function buildSubscriptionsPayload($subscriptions, $sort, $categories, $folders,
             'days_until_next_payment' => $subscription['days_until_next_payment'] ?? null,
             'days_until_next_payment_text' => htmlToText($subscription['days_until_next_payment_text'] ?? ''),
             'price' => formatPrice($subscription['price'], $subscription['currency_code'], $currencies),
+            'monthly_cost' => $subscription['monthly_cost'] ?? 0,
             'original_price' => $hasOriginal
                 ? formatPrice($subscription['original_price'], $subscription['original_currency_code'], $currencies)
                 : null,
@@ -448,7 +490,8 @@ function printSubscriptions($subscriptions, $sort, $categories, $folders, $membe
             </label>
             <div class="subscription<?= $subscriptionExtraClasses ?>"<?= $folderStyle ?>
                 onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>"
-                data-name="<?= htmlSafe($subscription['name']) ?>">
+                data-name="<?= htmlSafe($subscription['name']) ?>"
+                data-monthly-cost="<?= htmlspecialchars((string) ($subscription['monthly_cost'] ?? 0), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="subscription-main">
                     <span class="logo <?= !$hasLogo ? 'hideOnMobile' : '' ?>">
                         <?php

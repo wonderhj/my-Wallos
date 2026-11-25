@@ -158,6 +158,7 @@ if ($sortOrder == "payment_method_id") {
 
 // Folder cards always show each folder's full totals, whatever the list filters are.
 $folderStats = calculateFolderStats($db, $userId, $folders, $mainCurrencyId);
+$subscriptionsSummary = calculateSubscriptionsSummary($subscriptions, $db, $mainCurrencyId, $currencies, $settings);
 
 $headerClass = count($subscriptions) > 0 ? "main-actions" : "main-actions hidden";
 
@@ -273,6 +274,20 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     <button class="button mobile-grow" id="bulk-apply" onClick="applyBulkAction()" disabled><?= translate('apply', $i18n) ?></button>
     <button class="button secondary-button mobile-grow" onClick="toggleBulkMode()"><?= translate('cancel', $i18n) ?></button>
   </div>
+  <div class="subscriptions-summary<?= $subscriptionsSummary['count'] === 0 ? ' hidden' : '' ?>"
+    id="subscriptions-summary"
+    data-currency-code="<?= htmlspecialchars($subscriptionsSummary['currency_code'], ENT_QUOTES, 'UTF-8') ?>"
+    data-monthly-formatted="<?= htmlSafe($subscriptionsSummary['monthly_formatted']) ?>"
+    data-yearly-formatted="<?= htmlSafe($subscriptionsSummary['yearly_formatted']) ?>">
+    <div class="subscriptions-summary-card">
+      <span class="subscriptions-summary-label"><?= translate('monthly_cost', $i18n) ?></span>
+      <span class="subscriptions-summary-value" id="summary-monthly-cost"><?= htmlSafe($subscriptionsSummary['monthly_formatted']) ?></span>
+    </div>
+    <div class="subscriptions-summary-card">
+      <span class="subscriptions-summary-label"><?= translate('yearly_cost', $i18n) ?></span>
+      <span class="subscriptions-summary-value" id="summary-yearly-cost"><?= htmlSafe($subscriptionsSummary['yearly_formatted']) ?></span>
+    </div>
+  </div>
   <?php
   if (count($folders) > 0) {
     ?>
@@ -352,6 +367,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['payer_user_ids'] = $payersBySubscription[$id] ?? [];
       $print[$id]['price'] = floatval($subscription['price']);
+      $print[$id]['monthly_cost'] = getSubscriptionMonthlyCostInMainCurrency($subscription, $db, $mainCurrencyId);
       $print[$id]['sort_price'] = getSortPrice($subscription['price'], $subscription['currency_id'], $mainCurrencyId, $cycle, $frequency, $settings, $db);
       $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
       $print[$id]['inactive'] = $subscription['inactive'];

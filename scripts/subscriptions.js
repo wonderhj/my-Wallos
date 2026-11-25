@@ -807,7 +807,7 @@ function renderSubscription(subscription, data) {
       <label class="bulk-select">
         <input type="checkbox" class="bulk-select-checkbox" value="${id}" onChange="updateBulkSelection()">
       </label>
-      <div class="subscription${extraClasses}"${folderAttrs} onClick="showSubscriptionDetails(event, ${id})" data-id="${id}" data-name="${escapeHtml(subscription.name)}">
+      <div class="subscription${extraClasses}"${folderAttrs} onClick="showSubscriptionDetails(event, ${id})" data-id="${id}" data-name="${escapeHtml(subscription.name)}" data-monthly-cost="${Number(subscription.monthly_cost || 0)}">
         <div class="subscription-main">
           <span class="logo ${hasLogo ? "" : "hideOnMobile"}">${hasLogo ? renderSubscriptionLogo(subscription) : icons.logo}</span>
           <span class="name ${hasLogo ? "hideOnMobile" : ""}">${escapeHtml(subscription.name)}</span>
@@ -918,6 +918,7 @@ function fetchSubscriptions(id, event, initiator) {
       if (data.success) {
         subscriptionsContainer.innerHTML = renderSubscriptions(data);
         updateFolderCards(data.folders);
+        updateSubscriptionsSummary(data.summary);
         const mainActions = document.querySelector("#main-actions");
         if (data.total > 0 || data.subscriptions.length > 0) {
           mainActions.classList.remove("hidden");
@@ -1108,6 +1109,26 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+function updateSubscriptionsSummary(summary) {
+  const summaryContainer = document.querySelector("#subscriptions-summary");
+  if (!summaryContainer || !summary) {
+    return;
+  }
+  summaryContainer.dataset.currencyCode = summary.currency_code || "USD";
+  summaryContainer.dataset.monthlyFormatted = summary.monthly_formatted || "";
+  summaryContainer.dataset.yearlyFormatted = summary.yearly_formatted || "";
+  summaryContainer.classList.toggle("hidden", Number(summary.count || 0) === 0);
+
+  const monthlyEl = document.querySelector("#summary-monthly-cost");
+  const yearlyEl = document.querySelector("#summary-yearly-cost");
+  if (monthlyEl) {
+    monthlyEl.textContent = summary.monthly_formatted || "";
+  }
+  if (yearlyEl) {
+    yearlyEl.textContent = summary.yearly_formatted || "";
+  }
+}
+
 function searchSubscriptions() {
   const searchInput = document.querySelector("#search");
   const searchContainer = searchInput.parentElement;
@@ -1119,6 +1140,7 @@ function searchSubscriptions() {
     searchContainer.classList.remove("has-text");
   }
 
+  let visibleMonthlyTotal = 0;
   const subscriptions = document.querySelectorAll(".subscription");
   subscriptions.forEach(subscription => {
     const name = subscription.getAttribute('data-name').toLowerCase();
@@ -1126,8 +1148,27 @@ function searchSubscriptions() {
       subscription.parentElement.classList.add("hide");
     } else {
       subscription.parentElement.classList.remove("hide");
+      visibleMonthlyTotal += Number(subscription.getAttribute('data-monthly-cost') || 0);
     }
   });
+
+  const summaryContainer = document.querySelector("#subscriptions-summary");
+  const monthlyEl = document.querySelector("#summary-monthly-cost");
+  const yearlyEl = document.querySelector("#summary-yearly-cost");
+  if (summaryContainer && monthlyEl && yearlyEl) {
+    if (searchTerm.length > 0) {
+      const currencyCode = summaryContainer.dataset.currencyCode || "USD";
+      const formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: currencyCode,
+      });
+      monthlyEl.textContent = formatter.format(visibleMonthlyTotal);
+      yearlyEl.textContent = formatter.format(visibleMonthlyTotal * 12);
+    } else {
+      monthlyEl.textContent = summaryContainer.dataset.monthlyFormatted || "";
+      yearlyEl.textContent = summaryContainer.dataset.yearlyFormatted || "";
+    }
+  }
 }
 
 function clearSearch() {
