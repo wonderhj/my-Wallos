@@ -337,12 +337,10 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['currency_code'] = $currencies[$subscription['currency_id']]['code'];
       $currencyId = $subscription['currency_id'];
       $print[$id]['auto_renew'] = $subscription['auto_renew'];
-      $next_payment_timestamp = strtotime($subscription['next_payment']);
-      $formatted_date = $formatter->format($next_payment_timestamp);
       $daysUntilNextPayment = ($cycle == 5) ? null : getDaysUntilNextPayment($subscription['next_payment']);
       $print[$id]['days_until_next_payment'] = $daysUntilNextPayment;
       $print[$id]['days_until_next_payment_text'] = formatRemainingDays($daysUntilNextPayment, $i18n);
-      $print[$id]['next_payment'] = $formatted_date;
+      $print[$id]['next_payment'] = (new DateTime($subscription['next_payment']))->format('Y-m-d');
       $paymentIcon = $payment_methods[$paymentMethodId ?? ""]['icon'] ?? "";
       $paymentIconFolder = (strpos($paymentIcon, 'images/uploads/icons/') !== false) ? "" : "images/uploads/logos/";
       $print[$id]['payment_method_icon'] = $paymentIcon === "" ? "" : $paymentIconFolder . $paymentIcon;
