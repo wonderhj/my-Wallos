@@ -847,6 +847,15 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
 
 }
 
+.subscription .payment_method.days_remaining {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.subscription .payment_method.days_remaining.overdue {
+  color: var(--error-color, #e74c3c);
+}
+
 .subscription .price {
   grid-area: price;
   justify-content: center;

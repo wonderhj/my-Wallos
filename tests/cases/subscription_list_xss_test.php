@@ -19,7 +19,7 @@ wallos_test('stored names are escaped exactly once, whether or not they were sto
 
 wallos_test('the subscription list page escapes every stored name it prints', function () {
     $patterns = [
-        'includes/list_subscriptions.php' => ["htmlSafe(\$heading)", "htmlSafe(\$subscription['name'])", "htmlSafe(translate('payment_method'"],
+        'includes/list_subscriptions.php' => ["htmlSafe(\$heading)", "htmlSafe(\$subscription['name'])", "htmlSafe(\$daysText)"],
         'subscriptions.php' => ["htmlSafe(\$category['name'])", "htmlSafe(\$payment['name'])", "htmlSafe(\$member['name'])"],
         'includes/filters_menu.php' => ["htmlSafe(\$member['name'])", "htmlSafe(\$category['name'])", "htmlSafe(\$payment['name'])"],
     ];

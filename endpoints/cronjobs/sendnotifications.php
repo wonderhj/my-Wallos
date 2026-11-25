@@ -21,6 +21,7 @@ require 'settimezone.php';
 require_once __DIR__ . '/../../includes/webhook_headers.php';
 require_once __DIR__ . '/../../includes/subscription_payers.php';
 require_once __DIR__ . '/../../includes/subscription_categories.php';
+require_once __DIR__ . '/../../includes/upcoming_payments.php';
 
 if (php_sapi_name() == 'cli') {
     $date = new DateTime('now');
@@ -397,19 +398,20 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
         $notifyOtherPayers = [];
         $i = 0;
         while ($rowSubscription = $resultSubscriptions->fetchArray(SQLITE3_ASSOC)) {
+            if (isPaidThisCycle($rowSubscription['paid_at'] ?? null, (int) $rowSubscription['cycle'], (int) $rowSubscription['frequency'], $rowSubscription['next_payment'])) {
+                continue;
+            }
+
             if ($rowSubscription['notify_days_before'] !== -1) {
-                $daysToCompare = $rowSubscription['notify_days_before'];
+                $daysToCompare = (int) $rowSubscription['notify_days_before'];
             } else {
-                $daysToCompare = $days;
+                $daysToCompare = (int) $days;
             }
             $nextPaymentDate = new DateTime($rowSubscription['next_payment']);
+            $todayDate = new DateTime($currentDate->format('Y-m-d'));
+            $difference = (int) $todayDate->diff($nextPaymentDate)->format('%r%a');
 
-            $difference = $currentDate->diff($nextPaymentDate)->days;
-            if ($nextPaymentDate > $currentDate) {
-                $difference += 1;
-            }
-
-            if ($difference === $daysToCompare && $nextPaymentDate->format('Y-m-d') >= $currentDate->format('Y-m-d')) {
+            if ($difference >= 0 && $difference <= $daysToCompare) {
                 $allPayerIds = getPayersBySubscription($db, [$rowSubscription])[$rowSubscription['id']] ?? [];
                 echo "Subscription: " . $rowSubscription['name'] . "<br />";
                 echo "Next payment date: " . $nextPaymentDate->format('Y-m-d') . "<br />";
@@ -424,7 +426,7 @@ while ($userToNotify = $usersToNotify->fetchArray(SQLITE3_ASSOC)) {
                     'category' => payerNamesLabel(getCategoriesBySubscription($db, [$rowSubscription])[$rowSubscription['id']] ?? [], array_map(fn($category) => $category['name'], $categories)) ?: $categories[$rowSubscription['category_id']]['name'],
                     'payer' => payerNamesLabel($allPayerIds, array_map(fn($member) => $member['name'], $household)) ?: $household[$rowSubscription['payer_user_id']]['name'],
                     'date' => $rowSubscription['next_payment'],
-                    'days' => $daysToCompare,
+                    'days' => $difference,
                     'url' => $rowSubscription['url'],
                     'notes' => $rowSubscription['notes'],
                 ];

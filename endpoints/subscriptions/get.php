@@ -211,6 +211,9 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $currencyId = $subscription['currency_id'];
     $next_payment_timestamp = strtotime($subscription['next_payment']);
     $formatted_date = $formatter->format($next_payment_timestamp);
+    $daysUntilNextPayment = ($cycle == 5) ? null : getDaysUntilNextPayment($subscription['next_payment']);
+    $print[$id]['days_until_next_payment'] = $daysUntilNextPayment;
+    $print[$id]['days_until_next_payment_text'] = formatRemainingDays($daysUntilNextPayment, $i18n);
     $print[$id]['next_payment'] = $formatted_date;
     $print[$id]['auto_renew'] = $subscription['auto_renew'];
     $paymentIcon = $payment_methods[$paymentMethodId ?? ""]['icon'] ?? "";

@@ -101,6 +101,34 @@ if (!function_exists('isPaidThisCycle')) {
     }
 }
 
+if (!function_exists('getDaysUntilNextPayment')) {
+    function getDaysUntilNextPayment($nextPayment)
+    {
+        $nextPaymentDate = new DateTime($nextPayment);
+        $currentDate = new DateTime((new DateTime('now'))->format('Y-m-d'));
+        return (int) $currentDate->diff($nextPaymentDate)->format('%r%a');
+    }
+}
+
+if (!function_exists('formatRemainingDays')) {
+    function formatRemainingDays($days, $i18n)
+    {
+        if ($days === null) {
+            return '';
+        }
+        if ($days === 0) {
+            return translate('notification_due_today', $i18n);
+        }
+        if ($days === 1) {
+            return translate('notification_due_tomorrow', $i18n);
+        }
+        if ($days > 1) {
+            return sprintf(translate('notification_due_in_days', $i18n), $days);
+        }
+        return '-' . abs($days) . ' ' . translate('days', $i18n);
+    }
+}
+
 function getPricePerMonth($cycle, $frequency, $price)
 {
     $frequency = max(1, (int)$frequency);
@@ -354,6 +382,8 @@ function buildSubscriptionsPayload($subscriptions, $sort, $categories, $folders,
                 ? $subscription['billing_cycle']
                 : ($subscription['auto_renew'] ? translate("automatically_renews", $i18n) : translate("manual_renewal", $i18n))),
             'next_payment' => formatDate($subscription['next_payment'], $lang),
+            'days_until_next_payment' => $subscription['days_until_next_payment'] ?? null,
+            'days_until_next_payment_text' => htmlToText($subscription['days_until_next_payment_text'] ?? ''),
             'price' => formatPrice($subscription['price'], $subscription['currency_code'], $currencies),
             'original_price' => $hasOriginal
                 ? formatPrice($subscription['original_price'], $subscription['original_currency_code'], $currencies)
@@ -493,11 +523,14 @@ function printSubscriptions($subscriptions, $sort, $categories, $folders, $membe
                         </span>
 
                     </span>
-                    <span class="payment_method">
-                        <?php if (!empty($subscription['payment_method_icon'])) { ?>
-                        <img src="<?= $subscription['payment_method_icon'] ?>"
-                            title="<?= htmlSafe(translate('payment_method', $i18n) . ': ' . $subscription['payment_method_name']) ?>" />
-                        <?php } ?>
+                    <?php
+                    $daysText = $subscription['days_until_next_payment_text'] ?? '';
+                    $daysValue = $subscription['days_until_next_payment'] ?? null;
+                    $overdueClass = ($daysValue !== null && $daysValue < 0) ? ' overdue' : '';
+                    ?>
+                    <span class="payment_method days_remaining<?= $overdueClass ?>"
+                        title="<?= htmlSafe($daysText) ?>">
+                        <?= htmlSafe($daysText) ?>
                     </span>
                     <?php
                     $desktopMenuButtonClass = ""; {

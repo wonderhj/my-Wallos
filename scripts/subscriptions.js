@@ -780,8 +780,9 @@ function renderSubscription(subscription, data) {
   const originalPrice = subscription.original_price
     ? `<span class="original_price">(${escapeHtml(subscription.original_price)})</span>`
     : "";
-  const paymentIcon = subscription.payment_method_icon
-    ? `<img src="${escapeHtml(subscription.payment_method_icon)}" title="${escapeHtml(labels.payment_method)}: ${escapeHtml(subscription.payment_method_name)}" />`
+  const daysText = subscription.days_until_next_payment_text || "";
+  const overdueClass = subscription.days_until_next_payment !== null && subscription.days_until_next_payment < 0
+    ? " overdue"
     : "";
   const expandClass = data.mobile_navigation ? "mobileNavigationHideOnMobile" : "";
   const renewItem = subscription.can_renew
@@ -813,7 +814,7 @@ function renderSubscription(subscription, data) {
           <span class="cycle" title="${escapeHtml(subscription.cycle_title)}">${cycleIcon} ${escapeHtml(subscription.billing_cycle)}</span>
           <span class="next">${escapeHtml(subscription.next_payment)}</span>
           <span class="price"><span class="value">${escapeHtml(subscription.price)} ${originalPrice}</span></span>
-          <span class="payment_method">${paymentIcon}</span>
+          <span class="payment_method days_remaining${overdueClass}" title="${escapeHtml(daysText)}">${escapeHtml(daysText)}</span>
           <button type="button" class="actions-expand ${expandClass}" onClick="expandActions(event, ${id})">
             <i class="fas fa-ellipsis-v"></i>
           </button>
