@@ -4995,21 +4995,45 @@ body.details-open {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 14px 20px;
   border-radius: 12px;
   border: 1px solid var(--box-border-color);
   background-color: var(--box-background-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   color: var(--text-color);
+}
+
+.subscriptions-summary-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.subscriptions-summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--main-color, #007bff) 12%, transparent);
+  color: var(--main-color, #007bff);
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 .subscriptions-summary-label {
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .subscriptions-summary-value {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -5020,6 +5044,10 @@ body.details-open {
 
   .subscriptions-summary-card {
     padding: 12px 14px;
+  }
+
+  .subscriptions-summary-value {
+    font-size: 18px;
   }
 }
 

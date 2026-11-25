@@ -280,11 +280,17 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     data-monthly-formatted="<?= htmlSafe($subscriptionsSummary['monthly_formatted']) ?>"
     data-yearly-formatted="<?= htmlSafe($subscriptionsSummary['yearly_formatted']) ?>">
     <div class="subscriptions-summary-card">
-      <span class="subscriptions-summary-label"><?= translate('monthly_cost', $i18n) ?></span>
+      <div class="subscriptions-summary-info">
+        <span class="subscriptions-summary-icon"><i class="fa-regular fa-calendar"></i></span>
+        <span class="subscriptions-summary-label"><?= translate('monthly_cost', $i18n) ?></span>
+      </div>
       <span class="subscriptions-summary-value" id="summary-monthly-cost"><?= htmlSafe($subscriptionsSummary['monthly_formatted']) ?></span>
     </div>
     <div class="subscriptions-summary-card">
-      <span class="subscriptions-summary-label"><?= translate('yearly_cost', $i18n) ?></span>
+      <div class="subscriptions-summary-info">
+        <span class="subscriptions-summary-icon"><i class="fa-solid fa-calendar-days"></i></span>
+        <span class="subscriptions-summary-label"><?= translate('yearly_cost', $i18n) ?></span>
+      </div>
       <span class="subscriptions-summary-value" id="summary-yearly-cost"><?= htmlSafe($subscriptionsSummary['yearly_formatted']) ?></span>
     </div>
   </div>
@@ -748,7 +754,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
 </section>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
-<script src="scripts/subscriptions.js?<?= $version ?>"></script>
+<script src="scripts/subscriptions.js?<?= $version ?>.<?= filemtime(__DIR__ . '/scripts/subscriptions.js') ?>"></script>
 <?php
 if (isset($_GET['add'])) {
   ?>
